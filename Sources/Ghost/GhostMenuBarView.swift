@@ -1,12 +1,120 @@
+import AppKit
 import SwiftUI
 
-/// SF Symbols del estado (barra de menú y cabecera del popover).
+/// Icono de estado (barra de menú y cabecera del popover): un fantasma dibujado a partir de
+/// la silueta de `Assets/AppIcon.svg`. Es una imagen *template*, así que macOS la colorea
+/// solo según el modo claro/oscuro y el estado del botón.
+///
+/// - Inactivo: contorno con ojos abiertos (el botón además aparece atenuado).
+/// - Mac despierto: fantasma relleno con ojos abiertos.
+/// - Modo Ghost: fantasma relleno con los ojos cerrados (pantalla apagada, Mac vivo).
+/// - Pausa por batería baja: SF Symbol `battery.25percent`.
 enum GhostIcon {
-    static func symbol(isAwake: Bool, ghostMode: Bool, lockout: Bool) -> String {
-        if lockout { return "battery.25percent" }
-        if ghostMode { return "eye.slash.fill" }
-        if isAwake { return "eye.fill" }
-        return "eye"
+    enum State { case idle, awake, ghost, lockout }
+
+    static func state(isAwake: Bool, ghostMode: Bool, lockout: Bool) -> State {
+        if lockout { return .lockout }
+        if ghostMode { return .ghost }
+        if isAwake { return .awake }
+        return .idle
+    }
+
+    /// Imagen template de 18×18 pt.
+    static func image(for state: State) -> NSImage {
+        if state == .lockout {
+            let configuration = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
+            let image = NSImage(systemSymbolName: "battery.25percent", accessibilityDescription: "Ghost")?
+                .withSymbolConfiguration(configuration) ?? NSImage()
+            image.isTemplate = true
+            return image
+        }
+        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: true) { _ in
+            drawGhost(state)
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = "Ghost"
+        return image
+    }
+
+    // MARK: Dibujo
+
+    /// Escala la silueta del SVG (x 322…702, y 296…792) a 16 pt de alto, centrada en 18×18.
+    private static let scale: CGFloat = 16 / 496
+    private static let origin = NSPoint(x: (18 - 380 * scale) / 2, y: 1)
+
+    private static func point(_ x: CGFloat, _ y: CGFloat) -> NSPoint {
+        NSPoint(x: origin.x + (x - 322) * scale, y: origin.y + (y - 296) * scale)
+    }
+
+    private static func bodyPath() -> NSBezierPath {
+        let path = NSBezierPath()
+        path.move(to: point(322, 528))
+        path.curve(to: point(512, 296), controlPoint1: point(322, 398), controlPoint2: point(406, 296))
+        path.curve(to: point(702, 528), controlPoint1: point(618, 296), controlPoint2: point(702, 398))
+        path.line(to: point(702, 748))
+        // Tres ondas en la base (medias elipses rx 63.33, ry 44), de derecha a izquierda.
+        let rx: CGFloat = 63.33, ry: CGFloat = 44, top: CGFloat = 748, k: CGFloat = 0.5523
+        for cx in [638.67, 512, 385.33] as [CGFloat] {
+            path.curve(to: point(cx, top + ry),
+                       controlPoint1: point(cx + rx, top + k * ry),
+                       controlPoint2: point(cx + k * rx, top + ry))
+            path.curve(to: point(cx - rx, top),
+                       controlPoint1: point(cx - k * rx, top + ry),
+                       controlPoint2: point(cx - rx, top + k * ry))
+        }
+        path.close()
+        return path
+    }
+
+    private static let eyeCenters = [point(450, 515), point(574, 515)]
+
+    private static func openEyes() -> NSBezierPath {
+        let path = NSBezierPath()
+        for center in eyeCenters {
+            path.appendOval(in: NSRect(x: center.x - 1, y: center.y - 1.35, width: 2, height: 2.7))
+        }
+        return path
+    }
+
+    /// Ojos cerrados "‿ ‿" como en el icono de la app.
+    private static func closedEyes() -> NSBezierPath {
+        let path = NSBezierPath()
+        for center in eyeCenters {
+            let half: CGFloat = 1.35, dip: CGFloat = 1.2
+            let start = NSPoint(x: center.x - half, y: center.y - dip / 2)
+            let end = NSPoint(x: center.x + half, y: center.y - dip / 2)
+            let control = NSPoint(x: center.x, y: center.y - dip / 2 + dip * 2)
+            path.move(to: start)
+            path.curve(to: end,
+                       controlPoint1: NSPoint(x: start.x + (control.x - start.x) * 2 / 3,
+                                              y: start.y + (control.y - start.y) * 2 / 3),
+                       controlPoint2: NSPoint(x: end.x + (control.x - end.x) * 2 / 3,
+                                              y: end.y + (control.y - end.y) * 2 / 3))
+        }
+        path.lineWidth = 1.3
+        path.lineCapStyle = .round
+        return path
+    }
+
+    private static func drawGhost(_ state: State) {
+        NSColor.black.set()
+        let body = bodyPath()
+        switch state {
+        case .idle:
+            body.lineWidth = 1.3
+            body.lineJoinStyle = .round
+            body.stroke()
+            openEyes().fill()
+        case .awake, .ghost:
+            body.fill()
+            // Los ojos se recortan del relleno para que se vea el fondo de la barra.
+            NSGraphicsContext.current?.compositingOperation = .destinationOut
+            if state == .awake { openEyes().fill() } else { closedEyes().stroke() }
+            NSGraphicsContext.current?.compositingOperation = .sourceOver
+        case .lockout:
+            break
+        }
     }
 }
 
@@ -48,12 +156,14 @@ struct GhostMenuBarView: View {
                 Circle()
                     .fill(controller.isAwake ? Color.white.opacity(0.16) : cardFill)
                     .frame(width: 40, height: 40)
-                Image(systemName: GhostIcon.symbol(isAwake: controller.isAwake,
-                                                   ghostMode: controller.ghostModeActive,
-                                                   lockout: controller.batteryLockout))
-                    .font(.system(size: 17, weight: .semibold))
+                Image(nsImage: GhostIcon.image(for: GhostIcon.state(isAwake: controller.isAwake,
+                                                                    ghostMode: controller.ghostModeActive,
+                                                                    lockout: controller.batteryLockout)))
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 22, height: 22)
                     .foregroundStyle(.white)
-                    .contentTransition(.symbolEffect(.replace))
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text("Ghost")

@@ -123,16 +123,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func refreshStatusIcon() {
         guard let button = statusItem?.button else { return }
-        let symbol = GhostIcon.symbol(
+        button.image = GhostIcon.image(for: GhostIcon.state(
             isAwake: controller.isAwake,
             ghostMode: controller.ghostModeActive,
             lockout: controller.batteryLockout
-        )
-        let configuration = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
-        let image = NSImage(systemSymbolName: symbol, accessibilityDescription: "Ghost")?
-            .withSymbolConfiguration(configuration)
-        image?.isTemplate = true
-        button.image = image
+        ))
         button.appearsDisabled = !controller.isAwake && !controller.ghostModeActive
         button.toolTip = "Ghost — \(controller.statusLine)\nClic derecho: alternar · ⌥ clic: Modo Ghost"
     }

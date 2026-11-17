@@ -34,7 +34,7 @@ contraseña ni se queda esperando entrada, así que puedes ejecutarlo directamen
    ```
    `ghost status` debe decir "👻 Ghost" con el estado. Un estado "no despierto" es normal
    recién instalado.
-4. **Explícale al usuario, en 4–5 líneas:** dónde está el icono (ojo 👁 en la barra de menú),
+4. **Explícale al usuario, en 4–5 líneas:** dónde está el icono (fantasma 👻 en la barra de menú),
    el atajo `⇧⌘G` (apaga/enciende la pantalla manteniendo el Mac despierto), que con
    `ghost on 2h` / `ghost off` lo controla desde la terminal, y ofrécele activar el inicio
    automático con `ghost login on`.
@@ -110,7 +110,7 @@ No hay suite de tests: verifica con `swift build` y con el ciclo real
 | `GhostPowerManager.swift` | IOKit: aserción `PreventUserIdleSystemSleep`, `pmset displaysleepnow` (+ fallback `IORequestIdle`), `IOPMAssertionDeclareUserActivity` para despertar, lectura de batería (`IOPS*`), muestreo de CPU (`host_statistics`) y red (`getifaddrs`). |
 | `GhostHotkeyManager.swift` | Atajo global con Carbon `RegisterEventHotKey` (consume la tecla, sin permisos TCC) y `GhostShortcut`. |
 | `BlackCurtainManager.swift` | Ventanas negras a nivel salvapantallas en todas las pantallas. |
-| `GhostMenuBarView.swift` | Popover SwiftUI. |
+| `GhostMenuBarView.swift` | Popover SwiftUI y `GhostIcon` (fantasma de la barra de menú dibujado con `NSBezierPath` a partir de `AppIcon.svg`). |
 | `GhostSettingsView.swift` | `GhostSettings` (UserDefaults), ventana de ajustes, grabador de atajos, login item (`SMAppService`). |
 | `Resources/Info.plist` | Excluido de SwiftPM; `install.sh` lo copia a `Ghost.app/Contents/`. |
 | `bin/ghost` | CLI en bash 3.2 (el de macOS). Envía `open -g ghost://…` y lee `~/Library/Application Support/Ghost/status`. |

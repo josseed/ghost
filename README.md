@@ -65,14 +65,14 @@ Opciones: `--no-launch` (no abrir al terminar), `--no-cli` (no instalar el coman
 
 ## Uso
 
-Busca el **ojo** en la barra de menú:
+Busca el **fantasma** en la barra de menú:
 
 | Icono | Estado |
 |---|---|
-| `eye` (atenuado) | Inactivo: el Mac duerme con normalidad |
-| `eye.fill` | Mac despierto (la pantalla puede apagarse) |
-| `eye.slash.fill` | Modo Ghost: despierto y con la pantalla apagada |
-| `battery.25percent` | En pausa por batería baja |
+| Contorno con ojos abiertos (atenuado) | Inactivo: el Mac duerme con normalidad |
+| Relleno con ojos abiertos | Mac despierto (la pantalla puede apagarse) |
+| Relleno con ojos cerrados | Modo Ghost: despierto y con la pantalla apagada |
+| Batería baja | En pausa por batería baja |
 
 - **Clic**: abre el panel (interruptor, Modo Ghost, temporizador, estado en vivo).
 - **Clic derecho**: activa/desactiva "mantener despierto".

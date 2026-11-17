@@ -298,7 +298,7 @@ if [ "$LAUNCH" -eq 1 ]; then
     sleep 0.25
   done
   if [ "$started" -eq 1 ]; then
-    ok "Ghost está en ejecución (busca el icono 👁 en la barra de menú)"
+    ok "Ghost está en ejecución (busca el fantasma 👻 en la barra de menú)"
     echo
     "$CLI_SOURCE" status || true
   else
